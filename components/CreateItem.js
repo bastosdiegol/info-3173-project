@@ -7,13 +7,19 @@ import {
   TextInput,
   Button,
   Modal,
+  TouchableOpacity,
+  Image,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { db, firestore, auth } from "../FirebaseConfig";
+import { db, firestore, auth, storage, storageRef } from "../FirebaseConfig";
 import { collection, addDoc } from "firebase/firestore";
+import { uploadBytes, getDownloadURL } from "firebase/storage";
+import * as ImagePicker from "expo-image-picker";
+import { set } from "firebase/database";
 
 export default function CreateItem({ navigation }) {
+  const [imageUri, setImageUri] = useState("");
   const [itemName, setItemName] = useState("");
   const [itemDescription, setItemDescription] = useState("");
   const [itemQuantity, setItemQuantity] = useState(0);
@@ -119,7 +125,15 @@ export default function CreateItem({ navigation }) {
    * @returns {void}
    */
   const saveItem = async () => {
+    // Upload the image to Firebase Storage
+    let imageDownloadUrl = "";
+
     try {
+      if (imageUri) {
+        // Upload image and get the download URL
+        imageDownloadUrl = await uploadImageToFirebaseStorage(imageUri);
+      }
+
       // Creates the custom fields object
       const customFields = Array.from(customizedFieldsMap.entries()).reduce(
         (acc, [name, { type, value }]) => {
@@ -130,6 +144,7 @@ export default function CreateItem({ navigation }) {
       );
 
       const itemData = {
+        imageUrl: imageDownloadUrl,
         name: itemName,
         description: itemDescription,
         quantity: itemQuantity,
@@ -158,12 +173,100 @@ export default function CreateItem({ navigation }) {
     setSelectedFieldType("");
   };
 
+  /**
+   * @function verifyPermissions
+   * @description Verify if the app has the necessary permissions.
+   * @returns {boolean}
+   * @async
+   * @throws {Error} - If the app does not have the necessary permissions.
+   */
+  const verifyPermissions = async () => {
+    const cameraResult = await ImagePicker.requestCameraPermissionsAsync();
+    const libraryResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (
+      cameraResult.status !== "granted" &&
+      libraryResult.status !== "granted"
+    ) {
+      Alert.alert("Need Permissions", [{ text: "Okay" }]);
+      return false;
+    } else {
+      return true;
+    }
+  };
+
+  /**
+   * @function takeImageHandler
+   * @description Take an image with the camera.
+   * @returns {void}
+   * @async
+   * @throws {Error} - If the app does not have the necessary permissions.
+   */
+  const takeImageHandler = async () => {
+    const hasPermissions = await verifyPermissions();
+    if (!hasPermissions) {
+      console.log("We don't have permissions");
+      return false;
+    }
+    const image = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [4, 4],
+      quality: 0.5,
+    });
+    if (!image.canceled) {
+      setImageUri(image.assets[0].uri);
+      console.log(image.assets[0].uri);
+    }
+  };
+
+  /**
+   * Uploads an image to Firebase Storage.
+   * @param {string} imageUri - The local URI of the image to upload.
+   * @returns {Promise<string>} - A promise that resolves with the download URL of the uploaded image.
+   */
+  const uploadImageToFirebaseStorage = async (imageUri) => {
+    try {
+      // Create a reference to a unique file name in Firebase Storage
+      const fileName = `images/${Date.now()}.jpg`;
+
+      // Convert the local image URI to a Blob
+      const response = await fetch(imageUri);
+      const blob = await response.blob();
+
+      // Upload the blob to Firebase Storage
+      await uploadBytes(storageRef, blob);
+
+      // Get the download URL of the uploaded image
+      const downloadUrl = await getDownloadURL(storageRef);
+      console.log("Image uploaded successfully. Download URL:", downloadUrl);
+
+      return downloadUrl;
+    } catch (error) {
+      console.error("Error uploading image to Firebase Storage:", error);
+      throw error;
+    }
+  };
+
   return (
     <View>
       <ScrollView style={styles.paddedSection}>
         <View style={styles.headerRow}>
           <Ionicons name="create" size={24} color="black" />
           <Text style={styles.headerTitle}>Create New Item</Text>
+        </View>
+        <View style={styles.inputRow}>
+          <Text style={styles.label}>Image:</Text>
+          <TouchableOpacity onPress={takeImageHandler}>
+            {imageUri === "" ? (
+              <Ionicons name="camera" size={100} color="black" />
+            ) : (
+              <Image
+                source={{ uri: imageUri }}
+                style={{ width: 50, height: 50 }}
+              />
+            )}
+          </TouchableOpacity>
         </View>
         <View style={styles.inputRow}>
           <Text style={styles.label}>Item Name:</Text>

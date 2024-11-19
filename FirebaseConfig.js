@@ -2,6 +2,7 @@ import { initializeApp, getApp, getApps } from "firebase/app";
 import { getDatabase } from "firebase/database";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getStorage, ref } from "firebase/storage";
 
 // UPDATE THIS WITH YOUR PROJETC SPECIFIC
 const firebaseConfig = {
@@ -23,3 +24,8 @@ if (!getApps().length) {
 export const db = getDatabase(app);
 export const auth = getAuth(app);
 export const firestore = getFirestore(app);
+export const storage = getStorage(
+  app,
+  "gs://phonegap-app-a0d39.firebasestorage.app"
+);
+export const storageRef = ref(storage, "images/some-image.jpg");
