@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   ScrollView,
@@ -9,6 +9,8 @@ import {
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { firestore } from "../FirebaseConfig";
+import { collection, onSnapshot, doc, setDoc } from "firebase/firestore";
 
 export default function UserManager({ navigation }) {
   const [firstname, setFirstname] = useState("");
@@ -20,12 +22,23 @@ export default function UserManager({ navigation }) {
   const [roles, setRoles] = useState(["Supervisor", "Staff"]);
 
   /**
-   * Function that will connect to Firebase, retrieve and display all registred users.
-   * @returns {JSXElementConstructor} List containing all users.
+   * useEffect will connect to Firebase, retrieve and display all registred users.
    */
-  function listAllUsers() {
-    console.log("Listing all users");
-  }
+  useEffect(() => {
+    const unsubscribe = onSnapshot(
+      collection(firestore, "users"),
+      (snapshot) => {
+        const usersData = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setUsers(usersData);
+        console.log("Firebase Data:", usersData);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -33,14 +46,14 @@ export default function UserManager({ navigation }) {
         <FontAwesome name="users" size={24} color="black" />
         <Text style={styles.headerTitle}>Registred Users</Text>
       </View>
-      <ScrollView>
+      <ScrollView style={styles.scrollContainer}>
         {users.map((user, index) => (
-          <View key={index}>
-            <Text style={styles.text}>
+          <View style={styles.registredUser} key={index}>
+            <Text style={styles.column}>
               {user.firstname} {user.lastname}
             </Text>
-            <Text style={styles.text}>{user.email}</Text>
-            <Text style={styles.text}>{user.role}</Text>
+            <Text style={styles.column}>{user.role}</Text>
+            <FontAwesome name="gear" size={24} color="black" />
           </View>
         ))}
       </ScrollView>
@@ -108,6 +121,21 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     alignItems: "center",
     justifyContent: "center",
+  },
+  scrollContainer: {
+    width: "100%",
+  },
+  registredUser: {
+    padding: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingRight: 20,
+  },
+  column: {
+    flex: 1,
+    fontSize: 16,
+    textAlign: "center",
   },
   title: {
     fontSize: 24,

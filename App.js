@@ -3,6 +3,7 @@ import { StyleSheet } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import UserManager from "./components/UserManager";
+import { db, firestore, auth } from "./FirebaseConfig";
 
 const Stack = createNativeStackNavigator();
 
