@@ -4,6 +4,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Home from "./components/Home";
 import UserManager from "./components/UserManager";
+import CreateItem from "./components/CreateItem";
 import { db, firestore, auth } from "./FirebaseConfig";
 
 const Stack = createNativeStackNavigator();
@@ -17,6 +18,11 @@ export default function App() {
           name="UserManager"
           component={UserManager}
           options={{ title: "User Management" }}
+        />
+        <Stack.Screen
+          name="CreateItem"
+          component={CreateItem}
+          options={{ title: "Add New Item" }}
         />
       </Stack.Navigator>
     </NavigationContainer>

@@ -10,7 +10,16 @@ import {
 import { Picker } from "@react-native-picker/picker";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { firestore } from "../FirebaseConfig";
-import { collection, onSnapshot, doc, setDoc } from "firebase/firestore";
+import {
+  collection,
+  onSnapshot,
+  doc,
+  setDoc,
+  query,
+  orderBy,
+} from "firebase/firestore";
+import { auth } from "../FirebaseConfig";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 
 export default function UserManager({ navigation }) {
   const [firstname, setFirstname] = useState("");
@@ -19,26 +28,60 @@ export default function UserManager({ navigation }) {
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("");
   const [users, setUsers] = useState([]);
-  const [roles, setRoles] = useState(["Supervisor", "Staff"]);
+  const [roles, setRoles] = useState(["Staff", "Supervisor"]);
 
   /**
    * useEffect will connect to Firebase, retrieve and display all registred users.
    */
   useEffect(() => {
-    const unsubscribe = onSnapshot(
+    // Define the Firestore query with ordering
+    const collectionQuery = query(
       collection(firestore, "users"),
-      (snapshot) => {
-        const usersData = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setUsers(usersData);
-        console.log("Firebase Data:", usersData);
-      }
+      orderBy("role", "desc"),
+      orderBy("firstname"),
+      orderBy("lastname")
     );
 
+    // Subscribe to the query
+    const unsubscribe = onSnapshot(collectionQuery, (snapshot) => {
+      const usersData = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setUsers(usersData);
+      console.log("Ordered Firebase Data:", usersData);
+    });
+
+    // Cleanup subscription on unmount
     return () => unsubscribe();
   }, []);
+
+  // Add a new user to the Firebase database
+  const addUser = async () => {
+    try {
+      // Create the user in Firebase Authentication
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const user = userCredential.user;
+
+      console.log("User created in Firebase Auth with UID: ", user.uid);
+
+      // Add the user's data to Firestore
+      await setDoc(doc(firestore, "users", user.uid), {
+        firstname: firstname,
+        lastname: lastname,
+        email: user.email,
+        role: role,
+      });
+
+      console.log("User added to Firestore with UID: ", user.uid);
+    } catch (error) {
+      console.error("Error adding user: ", error.message);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -57,12 +100,11 @@ export default function UserManager({ navigation }) {
           </View>
         ))}
       </ScrollView>
-      <View style={styles.line} />
-      <View style={styles.headerRow}>
-        <FontAwesome name="user-plus" size={24} color="black" />
-        <Text style={styles.headerTitle}>Add New User</Text>
-      </View>
       <View style={styles.paddedSection}>
+        <View style={styles.headerRow}>
+          <FontAwesome name="user-plus" size={24} color="black" />
+          <Text style={styles.headerTitle}>Add New User</Text>
+        </View>
         <View style={styles.inputRow}>
           <Text style={styles.label}>Firstname</Text>
           <TextInput
@@ -109,7 +151,7 @@ export default function UserManager({ navigation }) {
           </Picker>
         </View>
 
-        <Button title="Add User" onPress={() => console.log("Adding user")} />
+        <Button title="Add User" onPress={addUser} />
       </View>
     </View>
   );
@@ -173,12 +215,19 @@ const styles = StyleSheet.create({
   },
   paddedSection: {
     width: "100%",
-    padding: 20,
+    padding: 15,
+    backgroundColor: "#fff",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.5,
+    shadowRadius: 15,
+    elevation: 10,
+    borderRadius: 10,
   },
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 10,
+    justifyContent: "center",
     marginBottom: 20,
   },
   headerTitle: {

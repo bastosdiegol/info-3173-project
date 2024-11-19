@@ -24,7 +24,7 @@ export default function Home({ navigation }) {
       .then(function (_firebaseUser) {
         Alert.alert("Login Successful!");
         setLoggedIn(true);
-        navigation.navigate("UserManager");
+        navigation.navigate("Home");
       })
       .catch(function (error) {
         var errorCode = error.code;
@@ -70,7 +70,6 @@ export default function Home({ navigation }) {
             autoCapitalize="none"
             autoCorrect={false}
             autoCompleteType="password"
-            keyboardType="visible-password"
             placeholder="Password"
             secureTextEntry={true}
           />
@@ -81,6 +80,14 @@ export default function Home({ navigation }) {
       )}
       {loggedIn && (
         <View style={styles.buttonContainer}>
+          <Button
+            title="User Management"
+            onPress={() => navigation.navigate("UserManager")}
+          />
+          <Button
+            title="Add New Item"
+            onPress={() => navigation.navigate("CreateItem")}
+          />
           <Button title="Logout" onPress={logoutWithFirebase} />
         </View>
       )}
@@ -141,6 +148,7 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     width: "100%",
-    marginBottom: 20,
+    marginVertical: 20,
+    gap: 20,
   },
 });
