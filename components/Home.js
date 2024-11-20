@@ -88,6 +88,10 @@ export default function Home({ navigation }) {
             title="Add New Item"
             onPress={() => navigation.navigate("CreateItem")}
           />
+          <Button
+            title="Inventory Management"
+            onPress={() => navigation.navigate("InventoryManager")}
+          />
           <Button title="Logout" onPress={logoutWithFirebase} />
         </View>
       )}

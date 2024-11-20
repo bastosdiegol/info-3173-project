@@ -158,6 +158,7 @@ export default function CreateItem({ navigation }) {
 
       console.log("Item saved successfully!");
       handleCancelModal();
+      navigation.navigate("InventoryManager");
     } catch (error) {
       console.error("Error saving item: ", error);
     }
@@ -288,8 +289,8 @@ export default function CreateItem({ navigation }) {
           <Text style={styles.label}>Quantity:</Text>
           <TextInput
             style={styles.input}
-            onChangeText={(text) => setItemQuantity(text)}
-            value={itemQuantity}
+            onChangeText={(text) => setItemQuantity(parseInt(text) || 0)}
+            value={itemQuantity.toString()}
             keyboardType="numeric"
           />
         </View>
