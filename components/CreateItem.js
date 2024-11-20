@@ -17,6 +17,7 @@ import { collection, addDoc } from "firebase/firestore";
 import { uploadBytes, getDownloadURL } from "firebase/storage";
 import * as ImagePicker from "expo-image-picker";
 import { set } from "firebase/database";
+import DateTimePickerModal from "@react-native-community/datetimepicker";
 
 export default function CreateItem({ navigation }) {
   const [imageUri, setImageUri] = useState("");
@@ -34,6 +35,7 @@ export default function CreateItem({ navigation }) {
     "Boolean",
   ]);
   const [selectedFieldType, setSelectedFieldType] = useState("");
+  const [datePickerVisible, setDatePickerVisible] = useState(false);
 
   /**
    * @function handleAddCustomField
@@ -59,6 +61,8 @@ export default function CreateItem({ navigation }) {
    * @returns {JSX.Element}
    */
   const renderCustomFields = () => {
+    console.log("Custom Fields Map:", customizedFieldsMap);
+
     return Array.from(customizedFieldsMap.entries()).map(
       ([name, { type, value }]) => (
         <View key={name} style={styles.inputRow}>
@@ -73,14 +77,23 @@ export default function CreateItem({ navigation }) {
               }
             />
           ) : type === "Date" ? (
-            <TextInput
-              style={styles.input}
-              placeholder="YYYY-MM-DD"
-              value={value}
-              onChangeText={(newValue) =>
-                handleCustomFieldChange(name, newValue)
-              }
-            />
+            <>
+              <TouchableOpacity onPress={showDatePicker} style={styles.input}>
+                <Text>{value ? value : "Select Date"}</Text>
+              </TouchableOpacity>
+
+              {datePickerVisible && (
+                <DateTimePickerModal
+                  value={value ? new Date(value) : new Date()}
+                  isVisible={datePickerVisible}
+                  mode="date"
+                  onChange={(selectedDate) =>
+                    handleDateChange(name, selectedDate)
+                  }
+                  onCancel={hideDatePicker}
+                />
+              )}
+            </>
           ) : type === "Boolean" ? (
             <Picker
               style={styles.input}
@@ -247,6 +260,38 @@ export default function CreateItem({ navigation }) {
       console.error("Error uploading image to Firebase Storage:", error);
       throw error;
     }
+  };
+
+  const handleDateChange = (fieldName, selectedDate) => {
+    // Check if selectedDate is valid
+    if (selectedDate) {
+      // Result:  LOG  Selected Date:  {"nativeEvent": {"timestamp": 1732147200000, "utcOffset": -300}, "type": "set"}
+      // Extract the local date in YYYY-MM-DD format
+      const convertedDate = new Date(selectedDate?.nativeEvent?.timestamp);
+      console.log("Selected Date: ", convertedDate);
+
+      const year = convertedDate.getFullYear();
+      const month = convertedDate.getMonth() + 1;
+      const day = convertedDate.getDate();
+
+      const formattedDate = `${year}-${month}-${day}`;
+      console.log("Selected Date: ", formattedDate);
+
+      // Call handleCustomFieldChange with the formatted date
+      handleCustomFieldChange(fieldName, formattedDate);
+    } else {
+      console.error("Invalid date selected.");
+    }
+
+    setDatePickerVisible(false);
+  };
+
+  const showDatePicker = () => {
+    setDatePickerVisible(true);
+  };
+
+  const hideDatePicker = () => {
+    setDatePickerVisible(false);
   };
 
   return (
