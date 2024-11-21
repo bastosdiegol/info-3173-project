@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { View, TextInput, Text, Button, StyleSheet, Alert } from "react-native";
 import { auth, firestore } from "../FirebaseConfig";
 import { collection, getDocs, doc, getDoc } from "firebase/firestore";
@@ -12,20 +12,12 @@ export default function Home({ navigation }) {
   const [loggedIn, setLoggedIn] = useState(false);
   const [isSupervisor, setIsSupervisor] = useState(false);
 
-  useEffect(() => {
-    const fetchUserRole = async () => {
-      await checkUserRole();
-    };
-    fetchUserRole();
-    // readBackupData();
-  }, []);
-
   /**
    * @function loginWithFirebase
    * @description Log in the user with firebase
    * @returns {void}
    */
-  const loginWithFirebase = () => {
+  const loginWithFirebase = async () => {
     if (loginEmail.length < 4) {
       Alert.alert("Please enter an email address.");
       return;
@@ -37,9 +29,15 @@ export default function Home({ navigation }) {
     }
 
     signInWithEmailAndPassword(auth, loginEmail, loginPassword)
-      .then(function (_firebaseUser) {
+      .then(async function (_firebaseUser) {
         Alert.alert("Login Successful!");
         setLoggedIn(true);
+        await checkUserRole();
+        if (isSupervisor) {
+          console.log("User is a Supervisor.");
+        } else {
+          console.log("User is not a Supervisor.");
+        }
         navigation.navigate("Home");
       })
       .catch(function (error) {
@@ -63,6 +61,7 @@ export default function Home({ navigation }) {
     auth.signOut().then(function () {
       Alert.alert("Logout Successful!");
       setLoggedIn(false);
+      setIsSupervisor(false);
     });
   };
 
@@ -207,19 +206,21 @@ export default function Home({ navigation }) {
       {loggedIn && (
         <View style={styles.buttonContainer}>
           <Button
-            title="User Management"
-            onPress={() => navigation.navigate("UserManager")}
-          />
-          <Button
-            title="Add New Item"
-            onPress={() => navigation.navigate("CreateItem")}
-          />
-          <Button
             title="Inventory Management"
             onPress={() => navigation.navigate("InventoryManager")}
           />
           {isSupervisor && (
-            <Button title="Backup Data" onPress={handleBackupData} />
+            <>
+              <Button
+                title="User Management"
+                onPress={() => navigation.navigate("UserManager")}
+              />
+              <Button
+                title="Add New Item"
+                onPress={() => navigation.navigate("CreateItem")}
+              />
+              <Button title="Backup Data" onPress={handleBackupData} />
+            </>
           )}
           <Button title="Logout" onPress={logoutWithFirebase} />
         </View>

@@ -12,11 +12,10 @@ import {
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { db, firestore, auth, storage, storageRef } from "../FirebaseConfig";
+import { firestore, storageRef } from "../FirebaseConfig";
 import { collection, addDoc } from "firebase/firestore";
 import { uploadBytes, getDownloadURL } from "firebase/storage";
 import * as ImagePicker from "expo-image-picker";
-import { set } from "firebase/database";
 import DateTimePickerModal from "@react-native-community/datetimepicker";
 
 export default function CreateItem({ navigation }) {
