@@ -28,10 +28,12 @@ export default function UserManager({ navigation }) {
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("");
   const [users, setUsers] = useState([]);
-  const [roles, setRoles] = useState(["Staff", "Supervisor"]);
+  const [roles, setRoles] = useState(["", "Staff", "Supervisor"]);
 
   /**
-   * useEffect will connect to Firebase, retrieve and display all registred users.
+   * @function useEffect
+   * @description Load the users from Firestore
+   * @returns {void}
    */
   useEffect(() => {
     // Define the Firestore query with ordering
@@ -56,7 +58,11 @@ export default function UserManager({ navigation }) {
     return () => unsubscribe();
   }, []);
 
-  // Add a new user to the Firebase database
+  /**
+   * @function addUser
+   * @description Add a new user to Firebase Auth and Firestore
+   * @returns {void}
+   */
   const addUser = async () => {
     try {
       // Create the user in Firebase Authentication

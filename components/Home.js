@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, TextInput, Text, Button, StyleSheet, Alert } from "react-native";
 import { auth, firestore } from "../FirebaseConfig";
 import { collection, getDocs, doc, getDoc } from "firebase/firestore";
@@ -11,6 +11,10 @@ export default function Home({ navigation }) {
   const [loginPassword, setLoginPassword] = useState("");
   const [loggedIn, setLoggedIn] = useState(false);
   const [isSupervisor, setIsSupervisor] = useState(false);
+
+  // useEffect(() => {
+  //   readBackupData();
+  // }, []);
 
   /**
    * @function loginWithFirebase
@@ -33,11 +37,6 @@ export default function Home({ navigation }) {
         Alert.alert("Login Successful!");
         setLoggedIn(true);
         await checkUserRole();
-        if (isSupervisor) {
-          console.log("User is a Supervisor.");
-        } else {
-          console.log("User is not a Supervisor.");
-        }
         navigation.navigate("Home");
       })
       .catch(function (error) {
@@ -92,6 +91,8 @@ export default function Home({ navigation }) {
    * @returns {Promise<void>}
    */
   const handleBackupData = async () => {
+    console.log("Backing up data...");
+
     try {
       const backupData = {};
 
